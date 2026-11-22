@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f7">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="郊遊遊戲">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="班級郊遊遊戲玩法介紹：盲人帶路、背靠背避難、閉眼捉人、沙丁魚捉迷藏。">
+<title>郊遊遊戲</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231c1c1e'/%3E%3Ccircle cx='22' cy='22' r='8' fill='%230E9384'/%3E%3Ccircle cx='42' cy='22' r='8' fill='%237A5AF8'/%3E%3Ccircle cx='22' cy='42' r='8' fill='%232E6FF2'/%3E%3Ccircle cx='42' cy='42' r='8' fill='%23D96C06'/%3E%3C/svg%3E">
+<style>
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI","PingFang TC","Hiragino Sans TC","Noto Sans TC","Microsoft JhengHei","Noto Sans CJK TC",Roboto,sans-serif;
+  --bg:#f2f2f7;--surface:#fff;--surface2:#f6f6f9;--text:#1c1c1e;--muted:#6c6c72;--faint:#a3a3aa;
+  --line:rgba(60,60,67,.12);--line2:rgba(60,60,67,.22);--fill:rgba(118,118,128,.12);--fill2:rgba(118,118,128,.22);
+  --bar:rgba(242,242,247,.82);--ink:#1c1c1e;--ink-on:#fff;--seg-on:#fff;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 6px 20px rgba(0,0,0,.05);
+  --warn:#d92d20;--warn-bg:rgba(217,45,32,.08);
+  --ghost:#e5484d;--obst:rgba(60,60,67,.22);--bush:rgba(48,140,88,.16);--bush2:rgba(48,140,88,.26);
+  --field:rgba(60,60,67,.035);--idle:rgba(60,60,67,.16);
+  --r:18px;--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#000;--surface:#1c1c1e;--surface2:#141416;--text:#f2f2f7;--muted:#a1a1a8;--faint:#6c6c72;
+    --line:rgba(235,235,245,.1);--line2:rgba(235,235,245,.2);--fill:rgba(118,118,128,.24);--fill2:rgba(118,118,128,.4);
+    --bar:rgba(0,0,0,.72);--ink:#f2f2f7;--ink-on:#000;--seg-on:#636366;
+    --shadow:none;--warn:#ff6b5e;--warn-bg:rgba(255,107,94,.13);
+    --ghost:#ff5a60;--obst:rgba(235,235,245,.22);--bush:rgba(90,200,130,.13);--bush2:rgba(90,200,130,.22);
+    --field:rgba(235,235,245,.03);--idle:rgba(235,235,245,.17);
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:var(--bg)}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font:16px/1.5 var(--font);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+a{color:inherit;text-decoration:none;touch-action:manipulation}
+h1,h2,h3,p{margin:0}
+svg{flex:none}
+:focus-visible{outline:2px solid var(--c,var(--ink));outline-offset:2px}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:20;background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-bottom:.5px solid var(--line);padding-top:var(--sat)}
+.tb{max-width:560px;margin:0 auto;height:56px;padding:0 12px 0 8px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.tb-left{justify-self:start;display:flex;align-items:center;padding-left:8px}
+.tb-title{font-size:15px;font-weight:600;color:var(--muted);white-space:nowrap}
+.tb-right{justify-self:end}
+.tb-back{display:inline-flex;align-items:center;gap:2px;min-height:44px;padding:0 10px 0 0;margin-left:-8px;color:var(--c,var(--text));font-weight:700;font-size:16px}
+.logo{display:flex;gap:5px}
+.logo i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+
+.seg{display:inline-flex;background:var(--fill);border-radius:12px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;min-width:46px;height:38px;padding:0 10px;border-radius:9px;font-weight:700;font-size:14px;color:var(--muted);cursor:pointer;transition:background .15s,color .15s}
+.seg button[aria-pressed="true"]{background:var(--seg-on);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg.full{display:flex;width:100%;margin-bottom:12px}
+.seg.full button{flex:1;height:44px;font-size:15px}
+.seg.full button[aria-pressed="true"]{background:var(--c);color:#fff;box-shadow:none}
+
+/* ---------- layout ---------- */
+.page{max-width:560px;margin:0 auto;padding:8px 16px calc(40px + var(--sab))}
+.card{background:var(--surface);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin:14px 0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.card-h h2{font-size:17px;font-weight:700}
+.muted{color:var(--muted);font-size:14px}
+.sec-h{font-size:22px;font-weight:800;margin:26px 4px 0;letter-spacing:-.01em}
+
+/* ---------- buttons ---------- */
+.linkbtn{border:0;background:none;padding:8px 6px;margin:-8px -6px;display:inline-flex;align-items:center;gap:5px;color:var(--c,var(--text));font-weight:700;font-size:14px;cursor:pointer}
+.linkbtn svg{width:16px;height:16px}
+
+/* ---------- home ---------- */
+.hero{padding:22px 4px 6px}
+.eyebrow{font-size:15px;color:var(--muted);font-weight:600}
+.title{font-size:38px;line-height:1.12;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+.tl-bar{display:flex;height:30px;border-radius:10px;overflow:hidden;gap:2px;margin-bottom:6px}
+.tl-seg{display:grid;place-items:center;min-width:0;color:#fff;font-size:12px;font-weight:700;background:var(--c);font-variant-numeric:tabular-nums}
+.tl-seg.buf{background:repeating-linear-gradient(135deg,var(--fill) 0 6px,var(--fill2) 6px 12px);color:var(--muted)}
+.tl-list{list-style:none;margin:0;padding:0}
+.tl-row{display:grid;grid-template-columns:76px 10px 1fr auto;align-items:center;gap:10px;min-height:52px;border-top:1px solid var(--line)}
+.tl-list li:first-child .tl-row{border-top:0}
+.tl-time{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.tl-dot.buf{background:none;border:2px dashed var(--faint)}
+.tl-name{font-weight:600;display:flex;align-items:center;gap:8px;min-width:0}
+.tl-dur{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(var(--c-rgb),.14);color:var(--c);white-space:nowrap;line-height:1.5}
+.cards{display:grid;gap:12px;margin-top:12px}
+.gcard{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;padding:16px 12px 16px 16px;background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);transition:transform .1s}
+.gcard:active{transform:scale(.985)}
+.gidx{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:rgba(var(--c-rgb),.14);color:var(--c);font-weight:800;font-size:19px}
+.gcard h3{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gtag{margin-top:3px;font-size:14px;line-height:1.45;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gmeta{margin-top:6px;font-size:13px;font-weight:700;color:var(--c)}
+.gcard .go{color:var(--faint);display:grid}
+
+/* ---------- game page ---------- */
+.ghero{padding:16px 2px 2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{font-size:13px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--fill);color:var(--muted);white-space:nowrap}
+.chip.c{background:rgba(var(--c-rgb),.14);color:var(--c)}
+.gname{font-size:32px;line-height:1.2;font-weight:800;letter-spacing:-.015em;margin-bottom:12px}
+.tagline{font-size:23px;line-height:1.45;font-weight:600;padding:16px 18px;border-radius:var(--r);background:rgba(var(--c-rgb),.1);border-left:5px solid var(--c)}
+.site{margin:14px 0;padding:16px;border-radius:var(--r);border:2px solid var(--warn);background:var(--warn-bg)}
+.site-h{display:flex;align-items:center;gap:8px;color:var(--warn);font-weight:800;font-size:17px}
+.site p{margin-top:6px;font-weight:600;line-height:1.55}
+.fb{display:grid;gap:8px;margin-top:12px}
+.fb div{background:var(--surface);border-radius:12px;padding:12px 14px}
+.fb b{display:block;font-size:16px;margin-bottom:2px}
+.fb span{font-size:15px;color:var(--muted);line-height:1.5}
+.canvas-wrap{border-radius:14px;background:var(--surface2);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+.canvas-wrap canvas{display:block}
+.anim-cap{margin:12px 2px 0;font-size:15px;font-weight:700;min-height:1.5em;line-height:1.45}
+.legend{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.legend li{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:50%;flex:none;display:inline-block}
+.sw.solid{background:var(--c)}
+.sw.ring{border:2px solid var(--c)}
+.sw.soft{background:rgba(var(--c-rgb),.42)}
+.sw.idle{background:var(--idle)}
+.sw.ghost{background:var(--ghost)}
+.sw.glow{background:var(--c);box-shadow:0 0 0 4px rgba(var(--c-rgb),.28)}
+.sw.wall{width:9px;height:9px;border:1.5px solid var(--faint)}
+.sw.block{border-radius:3px;background:var(--obst)}
+.sw.wave{border:2px solid transparent;border-right-color:var(--c);border-radius:50%}
+.dx{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);margin:12px 0;overflow:hidden}
+.dx>summary{list-style:none;display:flex;align-items:center;gap:12px;min-height:60px;padding:12px 16px;cursor:pointer;font-size:17px;font-weight:700;-webkit-user-select:none;user-select:none}
+.dx>summary::-webkit-details-marker{display:none}
+.dx-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(var(--c-rgb),.13);color:var(--c)}
+.dx.warn .dx-ic{background:var(--warn-bg);color:var(--warn)}
+.dx-t{flex:1}
+.dx-n{font-size:13px;color:var(--muted);font-weight:600}
+.chev{color:var(--faint);transition:transform .2s}
+.dx[open] .chev{transform:rotate(180deg)}
+.dx-body{padding:0 16px 12px}
+.dx-list{list-style:none;margin:0;padding:0;counter-reset:n}
+.dx-list li{position:relative;padding:11px 0 11px 34px;border-top:1px solid var(--line);font-size:16px;line-height:1.6}
+.dx-list li::before{counter-increment:n;content:counter(n);position:absolute;left:0;top:13px;width:22px;height:22px;border-radius:50%;background:var(--fill);color:var(--muted);font-size:12px;font-weight:700;display:grid;place-items:center;line-height:1}
+.dx.warn .dx-list li::before{background:var(--warn-bg);color:var(--warn)}
+.dx-list li.rd{padding:12px 0}
+.dx-list li.rd::before{content:none;display:none}
+.rd-h{display:flex;align-items:center;gap:10px}
+.rd-n{min-width:26px;height:26px;border-radius:8px;background:var(--c);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.rd-t{flex:1;font-weight:700;font-size:16px}
+.rd-min{font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rd p{margin:6px 0 0 36px;line-height:1.6}
+.rd-ph{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0 36px}
+.rd-pts{list-style:none;margin:10px 0 2px 36px;padding:0;display:grid;gap:6px}
+.dx-list .rd-pts li{padding:9px 12px;border:0;border-radius:10px;background:rgba(var(--c-rgb),.09);font-size:15px;line-height:1.5}
+.dx-list .rd-pts li::before{content:none;display:none}
+.pn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+.pn a{display:block;padding:12px 14px;border-radius:14px;background:var(--surface);box-shadow:var(--shadow);min-height:64px}
+.pn small{display:block;font-size:12px;font-weight:700;color:var(--c)}
+.pn b{font-size:15px}
+.pn .nx{grid-column:2;text-align:right}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript><p style="padding:24px">請開啟 JavaScript 才能使用這個頁面。Please enable JavaScript.</p></noscript>
+<script>
+'use strict';
+
+/* =====================================================================
+   遊戲資料 GAMES —— 之後增刪遊戲，只要改這個陣列即可。
+   ---------------------------------------------------------------------
+   id        唯一代號（英文，會出現在網址），例：'blind-guide'
+   color     主色（#RRGGBB）；卡片、動畫、按鈕都用這個顏色
+   minutes   在 60 分鐘流程時間軸上佔幾分鐘
+   interlude true＝標示為「插曲」（可省略）
+   anim      動畫類型：'guide' | 'backtoback' | 'marco' | 'sardine'
+             （填其他值會顯示通用的圓點動畫）
+   animData  動畫用資料（可省略）
+   name / tagline        名稱、一句話簡介           { zh:'…', en:'…' }
+   prep / rules / safety 準備、規則、安全提醒       { zh:['…'], en:['…'] }
+   rounds    分輪玩法 [{ name:{zh,en}, min:分鐘, desc:{zh,en}, phases?:[…] }]
+             phases（可省略）把一輪拆成幾段顯示：{ label:{zh,en}, min }
+             points（可省略）列在說明下面的小項目：{ zh:['…'], en:['…'] }
+   siteNote  場地提示（可省略）                     { zh, en }
+   fallback  替代遊戲（可省略）                     [{ name:{zh,en}, rule:{zh,en} }]
+   ===================================================================== */
+const SESSION_MINUTES = 60;
+
+const GAMES = [
+  {
+    id: 'blind-guide',
+    color: '#0E9384',
+    minutes: 12,
+    anim: 'guide',
+    name: { zh: '盲人帶路', en: 'Blind Guide' },
+    tagline: {
+      zh: '一人閉眼，搭檔只能用聲音指揮對方繞過障礙走到終點。',
+      en: 'One player walks with eyes closed; their partner uses only their voice to steer them around obstacles to the finish.'
+    },
+    prep: {
+      zh: [
+        '31 人分成 14 組兩人組＋1 組三人組（共 15 組）；三人組由一人閉眼、兩人輪流指揮。',
+        '起點線到終點線 20–30 公尺；場地小就縮短到 10 公尺左右。',
+        '用背包、外套、樹、長椅當障礙物，散放在起點和終點之間。'
+      ],
+      en: [
+        'Split 31 players into 14 pairs + 1 trio (15 teams). In the trio, one walks blind and the other two take turns guiding.',
+        'Start line to finish line: 20–30 m. If space is tight, shrink it to about 10 m.',
+        'Scatter backpacks, jackets, trees and benches between the lines as obstacles.'
+      ]
+    },
+    rules: {
+      zh: [
+        '閉眼的人雙手放胸前當「保險槓」，只能走、不能跑。',
+        '指揮的人只能用聲音，不能碰對方。'
+      ],
+      en: [
+        'The walker keeps eyes closed and hands in front of the chest as a “bumper” — walk, never run.',
+        'The guide may only use their voice — no touching.'
+      ]
+    },
+    rounds: [
+      { name: { zh: '正常版', en: 'Classic' }, min: 4,
+        desc: { zh: '所有組同時出發，最先到達終點的組獲勝。', en: 'All teams start together. The first team to reach the finish wins.' } },
+      { name: { zh: '互換＋暗號', en: 'Swap + code word' }, min: 4,
+        desc: { zh: '兩人交換角色。每組先商量一個暗號（例如每句指令前都要說「香蕉」），閉眼的人靠暗號認出搭檔的聲音。',
+                en: 'Partners swap roles. Each team agrees on a code word (e.g. say “banana” before every instruction) so the walker can pick out their partner’s voice.' } },
+      { name: { zh: '干擾版', en: 'Distraction' }, min: 4,
+        desc: { zh: '各組分成兩批：一批比賽，另一批可以故意亂喊假指令（只能喊，不能碰人）；然後兩批交換。',
+                en: 'Teams split into two waves: one wave races while the other shouts fake instructions (shouting only — no touching). Then switch.' } }
+    ],
+    safety: {
+      zh: [
+        '避開台階、水邊、馬路、坑洞。',
+        '指揮的人看到危險，必須馬上喊「停」。',
+        '搗亂的人不能拉、推、絆人。'
+      ],
+      en: [
+        'Stay away from steps, water, roads and holes.',
+        'Guides must shout “STOP!” the moment they see danger.',
+        'Distractors may never pull, push or trip anyone.'
+      ]
+    }
+  },
+  {
+    id: 'back-to-back',
+    color: '#7A5AF8',
+    minutes: 10,
+    anim: 'backtoback',
+    name: { zh: '背靠背避難', en: 'Back-to-Back Tag' },
+    tagline: {
+      zh: '被鬼追時，找人背靠背就安全——但只有 3 秒，一起大聲數完「1、2、3」就得分開再跑。',
+      en: 'When “it” is chasing you, stand back-to-back with someone to be safe — but only for 3 seconds: count “1, 2, 3” out loud together, then split up and run.'
+    },
+    prep: {
+      zh: ['劃出跑動範圍，所有人都在範圍內。'],
+      en: ['Mark out the play area; everyone stays inside it.']
+    },
+    rules: {
+      zh: [
+        '選 2 個鬼，其他人在場地裡跑。',
+        '被鬼追的時候，可以馬上找一個人背靠背站著，這時兩個人都安全，鬼不能拍。',
+        '但安全只有 3 秒：靠上後兩人要一起大聲數「1、2、3」，數完必須分開繼續跑。',
+        '不能連續兩次和同一個人靠，也不能三個人擠在一起靠，只能一對一。',
+        '被鬼拍到，就和鬼交換身份。'
+      ],
+      en: [
+        'Choose 2 players to be “it”; everyone else runs around the area.',
+        'When “it” is chasing you, quickly stand back-to-back with someone — you’re both safe and can’t be tagged.',
+        'Safety lasts only 3 seconds: once you’re back-to-back, count “1, 2, 3” out loud together, then you must split up and keep running.',
+        'You can’t pair with the same person twice in a row, and no groups of three — strictly one-on-one.',
+        'If “it” tags you, you swap roles.'
+      ]
+    },
+    rounds: [
+      { name: { zh: '2 個鬼（熱身）', en: '2 “its” (warm-up)' }, min: 3,
+        desc: { zh: '熟悉規則。大家很快會發現，最危險的是數完「3」、剛分開的那一刻。',
+                en: 'Learn the rules. Everyone soon discovers the most dangerous moment is right after “3”, just as you split up.' } },
+      { name: { zh: '4 個鬼', en: '4 “its”' }, min: 3,
+        desc: { zh: '鬼變多，安全的夥伴變得搶手，常常會出現兩個人同時衝向同一個人背後的場面。',
+                en: 'With more chasers, safe partners are in demand — you’ll often see two people racing for the same person’s back.' } },
+      { name: { zh: '換安全姿勢（亮點）', en: 'Switch the safe pose (highlight)' }, min: 4,
+        desc: { zh: '遊戲進行中，主持人隨時喊出新的安全姿勢，所有人立刻照新規則來。規則一變，原本背靠背的人要馬上換姿勢，慢半拍的就會被抓。例如：',
+                en: 'During play, the host can call out a new safe pose at any moment and everyone follows it at once. Pairs standing back-to-back must switch immediately — anyone half a beat slow gets tagged. For example:' },
+        points: {
+          zh: ['「擊掌！」兩人雙手互相貼著才安全', '「勾手肘！」兩人勾住手肘才安全', '「蹲下！」兩人一起蹲下才安全'],
+          en: ['“High five!” — safe only with both palms pressed together', '“Link elbows!” — safe only with elbows hooked', '“Squat!” — safe only when both squat down']
+        } }
+    ],
+    safety: {
+      zh: [
+        '只能小跑，不能全速衝刺，靠背時容易撞到。',
+        '數「1、2、3」要大聲，大家互相監督，不能偷偷拖時間。'
+      ],
+      en: [
+        'Jog only — no full sprints; it’s easy to collide when pairing up.',
+        'Count “1, 2, 3” loudly, and keep each other honest — no stalling.'
+      ]
+    }
+  },
+  {
+    id: 'marco-polo',
+    color: '#2E6FF2',
+    minutes: 12,
+    anim: 'marco',
+    name: { zh: '閉眼捉人', en: 'Marco Polo' },
+    tagline: {
+      zh: '鬼閉眼喊「Marco」，所有人必須回「Polo」，鬼靠聲音抓人。',
+      en: '“It” closes their eyes and calls “Marco!”, everyone must answer “Polo!”, and “it” hunts by sound.'
+    },
+    prep: {
+      zh: [
+        '劃一個小圈，所有人都在圈內。',
+        '鬼閉眼，雙手放胸前。',
+        '其他人只能走、不能跑。'
+      ],
+      en: [
+        'Mark out a small circle; everyone stays inside.',
+        '“It” closes their eyes, hands in front of the chest.',
+        'Everyone else may walk but never run.'
+      ]
+    },
+    rules: {
+      zh: [
+        '鬼喊「Marco」，所有人要馬上回「Polo」；不回或太小聲算犯規，直接當鬼。',
+        '被鬼拍到的人，當下一個鬼。',
+        '鬼偷看被發現，罰連當兩輪。',
+        '人牆邊界：暫時不玩或已出局的人站在圈邊當人牆，輕輕把快出圈的人推回去。'
+      ],
+      en: [
+        'When “it” calls “Marco!”, everyone answers “Polo!” right away. No answer, or too quiet, is a foul — you become “it”.',
+        'Whoever gets tagged becomes the next “it”.',
+        'Caught peeking? “It” stays “it” for two more rounds.',
+        'Human wall: players sitting out stand around the edge and gently guide anyone about to step out back inside.'
+      ]
+    },
+    rounds: [
+      { name: { zh: '一個鬼', en: 'One “it”' }, min: 4,
+        desc: { zh: '熱身輪，熟悉規則。', en: 'Warm-up round to learn the rules.' } },
+      { name: { zh: '三個鬼', en: 'Three “its”' }, min: 4,
+        desc: { zh: '三個鬼輪流喊，全場一直有人在回 Polo。', en: 'Three “its” take turns calling, so “Polo!” never stops.' } },
+      { name: { zh: '感染淘汰', en: 'Infection' }, min: 4,
+        desc: { zh: '被抓到的人也閉眼變成鬼，最後一個沒被抓到的人獲勝。', en: 'Anyone tagged also closes their eyes and becomes “it”. The last player untagged wins.' } }
+    ],
+    safety: {
+      zh: [
+        '只能走、不能跑，鬼也要放慢腳步。',
+        '只拍肩膀或手臂，不推、不抱、不拉。',
+        '人牆只能「輕輕」推回，不可用力。',
+        '選平坦的地面，避開石頭、樹根和坑洞。'
+      ],
+      en: [
+        'Walk only — and “it” moves slowly too.',
+        'Tag shoulders or arms only; no pushing, grabbing or pulling.',
+        'The human wall guides gently — never shove.',
+        'Use flat ground with no rocks, roots or holes.'
+      ]
+    }
+  },
+  {
+    id: 'sardines',
+    color: '#D96C06',
+    minutes: 20,
+    anim: 'sardine',
+    name: { zh: '沙丁魚捉迷藏', en: 'Sardines' },
+    tagline: {
+      zh: '只有一個人去躲，其他人去找，找到的人悄悄擠進去一起躲。',
+      en: 'Only one person hides and everyone else seeks — whoever finds the hider quietly squeezes in to hide too.'
+    },
+    siteNote: {
+      zh: '場地夠大、有樹叢或建築可以躲才玩。場地太小就改玩：',
+      en: 'Only play if the area is big enough and has bushes or buildings to hide behind. Too small? Play one of these instead:'
+    },
+    fallback: [
+      { name: { zh: '搶尾巴大戰', en: 'Tail Grab' },
+        rule: { zh: '每人在褲腰後塞一條手帕當尾巴，在小範圍內一邊保護自己的尾巴、一邊搶別人的，時間到搶最多的人贏。',
+                en: 'Everyone tucks a bandana into their waistband as a tail; guard yours while grabbing others’ — most tails when time runs out wins.' } },
+      { name: { zh: '數字抱團', en: 'Number Huddle' },
+        rule: { zh: '大家在場內走動，主持人喊一個數字，所有人馬上抱成那個人數的小團，沒抱上的人暫停一輪。',
+                en: 'Everyone walks around; when the host calls a number, form groups of exactly that size — anyone left out sits out one round.' } }
+    ],
+    prep: {
+      zh: [
+        '先說清楚場地範圍和邊界（例如「不能超過那排樹」）。',
+        '選出第一個躲的人。',
+        '其他人在出發點集合。'
+      ],
+      en: [
+        'Agree on clear boundaries first (e.g. “not past that row of trees”).',
+        'Pick the first hider.',
+        'Everyone else gathers at the base.'
+      ]
+    },
+    rules: {
+      zh: [
+        '躲的人先藏 2 分鐘；其他人在原地背對、閉眼數數。',
+        '找的人必須分散行動，不能集體一起走。',
+        '找到後不能出聲、不能指路，要悄悄擠進去一起躲。',
+        '最後一個找到的人，成為下一輪躲的人。共玩兩輪。',
+        '結束：最後一人找到時，大家一起喊出來嚇對方一跳；時間到還沒找完，躲著的人一起大喊。'
+      ],
+      en: [
+        'The hider gets 2 minutes to hide while everyone else stays put, facing away with eyes closed, counting.',
+        'Seekers must split up — no moving as a group.',
+        'When you find the hider: no talking, no pointing — just quietly squeeze in and hide too.',
+        'The last person to find the group becomes the next hider. Play two rounds.',
+        'Ending: when the last seeker arrives, everyone jumps out with a shout. If time runs out first, the hiders all shout together.'
+      ]
+    },
+    rounds: [
+      { name: { zh: '主持人指定躲藏者', en: 'Host picks the hider' },
+        desc: { zh: '主持人指定（或抽一個號碼）當躲的人。', en: 'The host picks (or draws) one number to hide.' },
+        phases: [
+          { label: { zh: '躲藏', en: 'Hide' }, min: 2 },
+          { label: { zh: '尋找', en: 'Seek' }, min: 10 }
+        ] },
+      { name: { zh: '最後找到的人去躲', en: 'Last finder hides' },
+        desc: { zh: '第一輪最後找到的人去躲，其他規則不變。', en: 'Whoever found the group last in round 1 hides. Same rules.' },
+        phases: [
+          { label: { zh: '躲藏', en: 'Hide' }, min: 2 },
+          { label: { zh: '尋找', en: 'Seek' }, min: 10 }
+        ] }
+    ],
+    safety: {
+      zh: [
+        '不躲在水邊、馬路旁、建築物內，或任何上鎖、危險的地方。',
+        '不爬樹、不爬牆。',
+        '一定要在約定範圍內，聽到集合口令就馬上回來。',
+        '結束時主持人清點人數。'
+      ],
+      en: [
+        'Never hide near water, next to roads, inside buildings, or anywhere locked or unsafe.',
+        'No climbing trees or walls.',
+        'Stay inside the boundaries and come back straight away when called.',
+        'The host counts heads at the end.'
+      ]
+    }
+  }
+];
+
+/* =====================================================================
+   介面文字（中／英）
+   ===================================================================== */
+const I18N = {
+  zh: {
+    appTitle: '郊遊遊戲',
+    appSub: (m, n) => `${m} 分鐘流程 · ${n} 個遊戲`,
+    timeline: '流程時間軸',
+    totalMin: m => `共 ${m} 分鐘`,
+    games: '遊戲',
+    minutes: m => `${m} 分鐘`,
+    minShort: m => `${m} 分`,
+    range: (a, b) => `${a}–${b} 分`,
+    roundsN: n => `${n} 輪`,
+    interlude: '插曲',
+    buffer: '集合／機動時間',
+    back: '返回',
+    gameOf: (i, n) => `遊戲 ${i}/${n}`,
+    gameN: i => `遊戲 ${i}`,
+    demo: '動畫演示',
+    replay: '重播',
+    prep: '準備', rules: '規則', rounds: '分輪玩法', safety: '安全提醒',
+    siteTitle: '場地提示',
+    prevGame: '上一個', nextGame: '下一個',
+    aStart: '起點', aFinish: '終點', aWinner: '贏家', aBoo: '嚇！', aNext: '下一輪躲',
+    capGuide: '閉眼的人慢慢走，指揮的人只用聲音帶路',
+    capMarco1: '鬼喊「Marco」→ 全場回「Polo」→ 鬼循著聲音抓人',
+    capMarco3: '三個鬼輪流喊，「Polo」此起彼落',
+    capInfect: '被拍到的人也閉眼變成鬼',
+    capInfectWin: '只剩最後一人沒被抓到 —— 贏家！',
+    capHide: '① 躲的人先去藏，其他人背對閉眼數數',
+    capSeek: '② 分散去找，找到的人悄悄擠進去',
+    capBoo: '③ 最後一人找到 → 大家一起喊出來！',
+    capDots: '玩家在場內移動',
+    lgBlind: '閉眼的人', lgGuide: '指揮的人', lgVoice: '聲音指令', lgObstacle: '障礙物',
+    lgBBGhost: '鬼', lgRunner: '跑的人', lgSafePair: '安全中（數 1、2、3）',
+    lgGhost: '鬼（閉眼）', lgPlayer: '其他人', lgPolo: '回應 Polo', lgWall: '人牆',
+    lgHiding: '躲著的人', lgSeeking: '還在找的人', lgDot: '玩家',
+    mode1: '1 個鬼', mode3: '3 個鬼', modeInfect: '感染淘汰',
+    capBB2: '被追就找人背靠背，一起數完「1、2、3」就要分開',
+    capBB4: '鬼變多，安全的夥伴變得搶手',
+    capBBPose: '主持人喊新姿勢，大家立刻換，慢半拍就會被抓',
+    bbMode2: '2 個鬼', bbMode4: '4 個鬼', bbModePose: '換姿勢',
+    bbPose: p => `安全姿勢：${p}`,
+    poseBack: '背靠背', poseClap: '擊掌！', poseElbow: '勾手肘！', poseSquat: '蹲下！'
+  },
+  en: {
+    appTitle: 'Outing Games',
+    appSub: (m, n) => `${m}-minute plan · ${n} games`,
+    timeline: 'Timeline',
+    totalMin: m => `${m} min total`,
+    games: 'Games',
+    minutes: m => `${m} min`,
+    minShort: m => `${m} min`,
+    range: (a, b) => `${a}–${b} min`,
+    roundsN: n => (n === 1 ? '1 round' : `${n} rounds`),
+    interlude: 'Interlude',
+    buffer: 'Regroup / buffer',
+    back: 'Back',
+    gameOf: (i, n) => `Game ${i}/${n}`,
+    gameN: i => `Game ${i}`,
+    demo: 'How it works',
+    replay: 'Replay',
+    prep: 'Setup', rules: 'Rules', rounds: 'Rounds', safety: 'Safety',
+    siteTitle: 'Check the area first',
+    prevGame: 'Previous', nextGame: 'Next',
+    aStart: 'START', aFinish: 'FINISH', aWinner: 'Winner', aBoo: 'BOO!', aNext: 'hides next',
+    capGuide: 'Walkers move slowly with eyes closed; guides steer by voice only',
+    capMarco1: '“It” calls “Marco!” → everyone answers “Polo!” → “it” follows the sound',
+    capMarco3: 'Three “its” take turns calling — “Polo!” from every side',
+    capInfect: 'Anyone tagged closes their eyes and becomes “it” too',
+    capInfectWin: 'One player left untagged — the winner!',
+    capHide: '① The hider hides; everyone else faces away and counts',
+    capSeek: '② Seekers split up; finders quietly squeeze in',
+    capBoo: '③ The last seeker arrives → everyone shouts!',
+    capDots: 'Players moving around the field',
+    lgBlind: 'Walker (eyes closed)', lgGuide: 'Guide', lgVoice: 'Voice', lgObstacle: 'Obstacle',
+    lgBBGhost: '“It”', lgRunner: 'Runners', lgSafePair: 'Safe (counting 1, 2, 3)',
+    lgGhost: '“It” (eyes closed)', lgPlayer: 'Players', lgPolo: 'Answering “Polo”', lgWall: 'Human wall',
+    lgHiding: 'Hiding', lgSeeking: 'Still seeking', lgDot: 'Players',
+    mode1: '1 “it”', mode3: '3 “its”', modeInfect: 'Infection',
+    capBB2: 'Chased? Pair up back-to-back, count “1, 2, 3” together, then split',
+    capBB4: 'More chasers — safe partners are in demand',
+    capBBPose: 'The host calls a new pose; everyone switches at once — slow pairs get tagged',
+    bbMode2: '2 “its”', bbMode4: '4 “its”', bbModePose: 'Switch pose',
+    bbPose: p => `Safe pose: ${p}`,
+    poseBack: 'Back to back', poseClap: 'High five!', poseElbow: 'Link elbows!', poseSquat: 'Squat!'
+  }
+};
+
+/* =====================================================================
+   基本工具
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rand = (a, b) => a + Math.random() * (b - a);
+const TAU = Math.PI * 2;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtMin = m => String(Math.round(m * 10) / 10);
+const CFONT = '-apple-system, BlinkMacSystemFont, "PingFang TC", "Hiragino Sans TC", "Noto Sans TC", "Microsoft JhengHei", "Segoe UI", sans-serif';
+function hexRgb(h) { h = String(h).replace('#', '').trim(); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16) || 0; return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+const rgba = (hex, a) => { const [r, g, b] = hexRgb(hex); return `rgba(${r},${g},${b},${a})`; };
+const cvars = hex => { const [r, g, b] = hexRgb(hex); return `--c:${hex};--c-rgb:${r},${g},${b};--c-on:#fff`; };
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('outing:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('outing:' + k, JSON.stringify(v)); } catch (e) { /* 私密模式等情況，略過 */ } }
+};
+
+const S = {
+  lang: store.get('lang', 'zh') === 'en' ? 'en' : 'zh',
+  open: store.get('open', {}) || {},
+  modes: {}
+};
+
+function t(k, ...a) {
+  let v = I18N[S.lang][k];
+  if (v === undefined) v = I18N.zh[k];
+  if (v === undefined) return k;
+  return typeof v === 'function' ? v(...a) : v;
+}
+function L(o) {
+  if (o == null) return '';
+  if (typeof o !== 'object' || Array.isArray(o)) return o;
+  if (o[S.lang] !== undefined) return o[S.lang];
+  return o.zh !== undefined ? o.zh : '';
+}
+
+const SV = (w, inner, extra = '') => `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${inner}</svg>`;
+const ICON = {
+  back: SV(22, '<path d="M15 5l-7 7 7 7"/>'),
+  next: SV(20, '<path d="M9 5l7 7-7 7"/>'),
+  down: SV(20, '<path d="M6 9l6 6 6-6"/>', 'class="chev"'),
+  reset: SV(20, '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/>'),
+  prep: SV(18, '<rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9z"/><path d="M9 12h6M9 16h4"/>'),
+  rules: SV(18, '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" stroke-width="3"/>'),
+  rounds: SV(18, '<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/>'),
+  safety: SV(18, '<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M12 8v5M12 16.5h.01"/>'),
+  alert: SV(20, '<path d="M12 4L2.8 19.5h18.4L12 4z"/><path d="M12 10v4.5M12 17h.01"/>')
+};
+
+/* =====================================================================
+   畫面：路由
+   ===================================================================== */
+const $app = $('#app');
+
+function route() {
+  const parts = location.hash.replace(/^#\/?/, '').split('/');
+  if (parts[0] === 'g' && parts[1]) return { name: 'game', id: decodeURIComponent(parts[1]) };
+  return { name: 'home' };
+}
+
+function render() {
+  Anim.stop();
+  document.documentElement.lang = S.lang === 'zh' ? 'zh-Hant' : 'en';
+  const r = route();
+  if (r.name === 'game') {
+    const g = GAMES.find(x => x.id === r.id);
+    if (!g) { location.replace('#/'); return; }
+    document.title = `${L(g.name)} · ${t('appTitle')}`;
+    renderGame(g);
+  } else {
+    document.title = t('appTitle');
+    renderHome();
+  }
+}
+
+function langToggle() {
+  return `<div class="seg" role="group" aria-label="Language / 語言">
+    <button type="button" data-act="lang" data-lang="zh" aria-pressed="${S.lang === 'zh'}">中</button>
+    <button type="button" data-act="lang" data-lang="en" aria-pressed="${S.lang === 'en'}">EN</button></div>`;
+}
+
+function topbar({ back = false, title = '' } = {}) {
+  const left = back
+    ? `<a class="tb-back" href="#/">${ICON.back}<span>${t('back')}</span></a>`
+    : `<span class="logo" aria-hidden="true">${GAMES.map(g => `<i style="${cvars(g.color)}"></i>`).join('')}</span>`;
+  return `<header class="topbar"><div class="tb"><div class="tb-left">${left}</div><div class="tb-title">${esc(title)}</div><div class="tb-right">${langToggle()}</div></div></header>`;
+}
+
+/* ---------- 首頁 ---------- */
+function renderHome() {
+  const used = GAMES.reduce((s, g) => s + g.minutes, 0);
+  const buf = Math.max(0, SESSION_MINUTES - used);
+  const totalBar = Math.max(SESSION_MINUTES, used);
+  let acc = 0;
+  const rows = GAMES.map((g, i) => { const a = acc; acc += g.minutes; return { g, i, a, b: acc }; });
+  const seg = (min, style, cls = '') => `<div class="tl-seg ${cls}" style="flex:${min} 1 0;${style}">${min / totalBar >= 0.045 ? fmtMin(min) : ''}</div>`;
+  const bar = rows.map(r => seg(r.g.minutes, cvars(r.g.color))).join('') + (buf ? seg(buf, '', 'buf') : '');
+  const list = rows.map(r => `<li><a class="tl-row" href="#/g/${encodeURIComponent(r.g.id)}" style="${cvars(r.g.color)}">
+      <span class="tl-time">${t('range', fmtMin(r.a), fmtMin(r.b))}</span><i class="tl-dot"></i>
+      <span class="tl-name">${esc(L(r.g.name))}${r.g.interlude ? `<span class="badge">${t('interlude')}</span>` : ''}</span>
+      <span class="tl-dur">${t('minutes', fmtMin(r.g.minutes))}</span></a></li>`).join('')
+    + (buf ? `<li><div class="tl-row"><span class="tl-time">${t('range', fmtMin(used), fmtMin(SESSION_MINUTES))}</span><i class="tl-dot buf"></i>
+      <span class="tl-name">${t('buffer')}</span><span class="tl-dur">${t('minutes', fmtMin(buf))}</span></div></li>` : '');
+  const cards = GAMES.map((g, i) => `<a class="gcard" href="#/g/${encodeURIComponent(g.id)}" style="${cvars(g.color)}">
+      <span class="gidx">${i + 1}</span>
+      <div><h3>${esc(L(g.name))}${g.interlude ? `<span class="badge">${t('interlude')}</span>` : ''}</h3>
+      <p class="gtag">${esc(L(g.tagline))}</p>
+      <p class="gmeta">${t('minutes', fmtMin(g.minutes))} · ${t('roundsN', g.rounds.length)}</p></div>
+      <span class="go">${ICON.next}</span></a>`).join('');
+  $app.innerHTML = `${topbar()}
+  <main class="page home">
+    <section class="hero"><p class="eyebrow">${t('appSub', SESSION_MINUTES, GAMES.length)}</p><h1 class="title">${t('appTitle')}</h1></section>
+    <section class="card"><div class="card-h"><h2>${t('timeline')}</h2><span class="muted">${t('totalMin', SESSION_MINUTES)}</span></div>
+      <div class="tl-bar" aria-hidden="true">${bar}</div><ol class="tl-list">${list}</ol></section>
+    <h2 class="sec-h">${t('games')}</h2>
+    <div class="cards">${cards}</div>
+  </main>`;
+}
+
+/* ---------- 遊戲詳情頁 ---------- */
+function renderGame(g) {
+  const i = GAMES.indexOf(g);
+  const prev = GAMES[i - 1], next = GAMES[i + 1];
+  const site = g.siteNote ? `<section class="site" role="note">
+      <div class="site-h">${ICON.alert}<span>${t('siteTitle')}</span></div>
+      <p>${esc(L(g.siteNote))}</p>
+      ${(g.fallback || []).length ? `<div class="fb">${g.fallback.map(f => `<div><b>${esc(L(f.name))}</b><span>${esc(L(f.rule))}</span></div>`).join('')}</div>` : ''}
+    </section>` : '';
+  $app.innerHTML = `<div class="view" style="${cvars(g.color)}">
+  ${topbar({ back: true, title: t('gameOf', i + 1, GAMES.length) })}
+  <main class="page game">
+    <section class="ghero">
+      <div class="chips"><span class="chip c">${t('gameN', i + 1)}</span><span class="chip">${t('minutes', fmtMin(g.minutes))}</span><span class="chip">${t('roundsN', g.rounds.length)}</span>${g.interlude ? `<span class="chip c">${t('interlude')}</span>` : ''}</div>
+      <h1 class="gname">${esc(L(g.name))}</h1>
+      <p class="tagline">${esc(L(g.tagline))}</p>
+    </section>
+    ${site}
+    ${animHTML(g)}
+    ${listBlock(g, 'prep', false)}
+    ${listBlock(g, 'rules', true)}
+    ${roundsBlock(g)}
+    ${listBlock(g, 'safety', true, 'warn')}
+    <nav class="pn">
+      ${prev ? `<a href="#/g/${encodeURIComponent(prev.id)}" style="${cvars(prev.color)}"><small>‹ ${t('prevGame')}</small><b>${esc(L(prev.name))}</b></a>` : ''}
+      ${next ? `<a class="nx" href="#/g/${encodeURIComponent(next.id)}" style="${cvars(next.color)}"><small>${t('nextGame')} ›</small><b>${esc(L(next.name))}</b></a>` : ''}
+    </nav>
+  </main></div>`;
+  Anim.start($('[data-canvas]'), g);
+}
+
+const LEGENDS = {
+  guide: [['solid', 'lgBlind'], ['ring', 'lgGuide'], ['wave', 'lgVoice'], ['block', 'lgObstacle']],
+  backtoback: [['ghost', 'lgBBGhost'], ['solid', 'lgRunner'], ['glow', 'lgSafePair']],
+  marco: [['ghost', 'lgGhost'], ['solid', 'lgPlayer'], ['glow', 'lgPolo'], ['wall', 'lgWall']],
+  sardine: [['solid', 'lgHiding'], ['ring', 'lgSeeking']],
+  dots: [['solid', 'lgDot']]
+};
+
+/* 動畫上方的切換按鈕（對應各輪玩法），第一個是預設 */
+const MODES = {
+  marco: [[1, 'mode1'], [3, 'mode3'], ['infect', 'modeInfect']],
+  backtoback: [[2, 'bbMode2'], [4, 'bbMode4'], ['pose', 'bbModePose']]
+};
+const curMode = anim => (S.modes[anim] !== undefined ? S.modes[anim] : (MODES[anim] ? MODES[anim][0][0] : null));
+
+function animHTML(g) {
+  const lg = LEGENDS[g.anim] || LEGENDS.dots;
+  const modes = MODES[g.anim]
+    ? `<div class="seg full" role="group">${MODES[g.anim].map(([m, k]) =>
+        `<button type="button" data-act="mode" data-m="${m}" aria-pressed="${String(curMode(g.anim)) === String(m)}">${t(k)}</button>`).join('')}</div>`
+    : '';
+  return `<section class="card anim">
+    <div class="card-h"><h2>${t('demo')}</h2><button type="button" class="linkbtn" data-act="replay">${ICON.reset}<span>${t('replay')}</span></button></div>
+    ${modes}
+    <div class="canvas-wrap"><canvas data-canvas role="img" aria-label="${esc(L(g.name))} — ${t('demo')}"></canvas></div>
+    <p class="anim-cap" data-anim-cap></p>
+    <ul class="legend">${lg.map(([sw, k]) => `<li><i class="sw ${sw}"></i>${t(k)}</li>`).join('')}</ul>
+  </section>`;
+}
+
+function listBlock(g, key, defOpen, cls = '') {
+  const items = L(g[key]);
+  if (!items || !items.length) return '';
+  const k = g.id + ':' + key;
+  const open = S.open[k] !== undefined ? S.open[k] : defOpen;
+  return `<details class="dx ${cls}" data-k="${k}"${open ? ' open' : ''}>
+    <summary><span class="dx-ic">${ICON[key]}</span><span class="dx-t">${t(key)}</span><span class="dx-n">${items.length}</span>${ICON.down}</summary>
+    <div class="dx-body"><ol class="dx-list">${items.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div></details>`;
+}
+
+const roundMin = (g, r) => r.phases && r.phases.length ? r.phases.reduce((s, p) => s + p.min, 0) : (r.min || g.minutes / g.rounds.length);
+
+function roundsBlock(g) {
+  if (!g.rounds || !g.rounds.length) return '';
+  const k = g.id + ':rounds';
+  const open = S.open[k] !== undefined ? S.open[k] : true;
+  const items = g.rounds.map((r, i) => `<li class="rd">
+      <div class="rd-h"><span class="rd-n">${i + 1}</span><span class="rd-t">${esc(L(r.name))}</span><span class="rd-min">${t('minShort', fmtMin(roundMin(g, r)))}</span></div>
+      ${r.desc ? `<p>${esc(L(r.desc))}</p>` : ''}
+      ${r.points ? `<ul class="rd-pts">${L(r.points).map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+      ${r.phases ? `<div class="rd-ph">${r.phases.map(p => `<span class="chip c">${esc(L(p.label))} ${t('minShort', fmtMin(p.min))}</span>`).join('')}</div>` : ''}
+    </li>`).join('');
+  return `<details class="dx" data-k="${k}"${open ? ' open' : ''}>
+    <summary><span class="dx-ic">${ICON.rounds}</span><span class="dx-t">${t('rounds')}</span><span class="dx-n">${g.rounds.length}</span>${ICON.down}</summary>
+    <div class="dx-body"><ol class="dx-list" style="counter-reset:none">${items}</ol></div></details>`;
+}
+
+/* =====================================================================
+   動畫（Canvas，用彩色圓點代表人）
+   ===================================================================== */
+const pal = {};
+function readPalette() {
+  const cs = getComputedStyle(document.documentElement);
+  ['text', 'muted', 'faint', 'line', 'line2', 'surface', 'surface2', 'ghost', 'obst', 'bush', 'bush2', 'field', 'idle']
+    .forEach(k => { pal[k] = cs.getPropertyValue('--' + k).trim() || '#888'; });
+}
+
+function rrect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function dot(ctx, x, y, r, fill) { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fillStyle = fill; ctx.fill(); }
+function ring(ctx, x, y, r, stroke, lw, fill) {
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.stroke();
+}
+function closedEyes(ctx, x, y, r) {
+  ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+  const er = r * 0.24;
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(x + s * r * 0.36, y - r * 0.12, er, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); }
+  ctx.restore();
+}
+function bumper(ctx, x, y, r, ang, color) {
+  ctx.beginPath(); ctx.arc(x, y, r + 3.5, ang - 0.85, ang + 0.85);
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.stroke();
+}
+function blob(ctx, x, y, r, color) {
+  ctx.beginPath();
+  for (const [dx, dy, k] of [[0, 0, 1], [-0.62, 0.3, 0.72], [0.6, 0.24, 0.76], [0.05, 0.5, 0.7]]) {
+    ctx.moveTo(x + dx * r + k * r, y + dy * r); ctx.arc(x + dx * r, y + dy * r, k * r, 0, TAU);
+  }
+  ctx.fillStyle = color; ctx.fill();
+}
+function tag(ctx, text, x, y, bg, fg, size) {
+  ctx.font = `700 ${size}px ${CFONT}`;
+  const w = ctx.measureText(text).width + 12, h = size + 8;
+  rrect(ctx, x - w / 2, y - h / 2, w, h, h / 2); ctx.fillStyle = bg; ctx.fill();
+  ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x, y + 0.5);
+}
+const turnToward = (h, target, maxStep) => { const d = ((target - h + Math.PI) % TAU + TAU) % TAU - Math.PI; return h + clamp(d, -maxStep, maxStep); };
+
+const SCENES = {};
+
+/* 盲人帶路：幾組圓點從左走到右繞過障礙，閉眼的點在前、指揮的點在後發出聲波 */
+SCENES.guide = (W, H, g) => {
+  const C = g.color;
+  const x0 = 30, x1 = W - 32;
+  const lanes = [0.3, 0.5, 0.7, 0.885].map(f => Math.round(H * f));
+  const amp = Math.min(19, (lanes[1] - lanes[0]) * 0.44), wid = 24;
+  const layout = [[[0.3, 1], [0.68, -1]], [[0.48, 1], [0.86, -1]], [[0.24, -1], [0.62, 1]], [[0.44, -1], [0.78, -1]]];
+  const obs = [];
+  layout.forEach((arr, li) => arr.forEach(([f, d], k) => obs.push({ li, x: x0 + (x1 - x0) * f, y: lanes[li], d, kind: (li + k) % 3 })));
+  const yAt = (li, x) => { let y = lanes[li]; for (const o of obs) if (o.li === li) { const u = (x - o.x) / wid; y += amp * o.d * Math.exp(-u * u); } return y; };
+  const pairs = lanes.map((_, li) => ({ li }));
+  let waves = [], finished = 0, hold = 0, time = 0;
+  const reset = () => {
+    pairs.forEach(p => { p.x = x0; p.v = (x1 - x0) / rand(5, 7); p.ph = rand(0, TAU); p.done = false; p.rank = 0; p.wt = rand(0, 0.9); });
+    finished = 0; hold = 0; waves = [];
+  };
+  reset();
+  return {
+    caption: () => t('capGuide'),
+    update(dt) {
+      time += dt;
+      for (const p of pairs) {
+        if (p.done) continue;
+        let near = 1;
+        for (const o of obs) if (o.li === p.li && o.x - p.x > -6 && o.x - p.x < 44) near = 0.55;
+        const wob = 0.5 + 0.5 * (0.5 + 0.5 * Math.sin(time * 1.8 + p.ph));
+        p.x += p.v * wob * near * dt;
+        if (p.x >= x1) { p.x = x1; p.done = true; p.rank = ++finished; }
+        p.wt -= dt;
+        if (p.wt <= 0) { waves.push({ p, a: 0 }); p.wt = rand(0.7, 1.2); }
+      }
+      for (const w of waves) w.a += dt;
+      waves = waves.filter(w => w.a < 0.7);
+      if (finished === pairs.length) { hold += dt; if (hold > 2.2) reset(); }
+    },
+    draw(ctx) {
+      ctx.font = `700 11px ${CFONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = pal.muted; ctx.fillText(t('aStart'), x0, 13);
+      ctx.fillStyle = C; ctx.fillText(t('aFinish'), x1, 13);
+      ctx.lineWidth = 1.5; ctx.strokeStyle = pal.line2; ctx.setLineDash([4, 5]);
+      ctx.beginPath(); ctx.moveTo(x0, 25); ctx.lineTo(x0, H - 6); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = rgba(C, 0.85); ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x1, 25); ctx.lineTo(x1, H - 6); ctx.stroke();
+      ctx.fillStyle = pal.obst;
+      for (const o of obs) {
+        if (o.kind === 0) { rrect(ctx, o.x - 8, o.y - 7, 16, 14, 4); ctx.fill(); }
+        else if (o.kind === 1) { ctx.beginPath(); ctx.arc(o.x, o.y, 8.5, 0, TAU); ctx.fill(); }
+        else { rrect(ctx, o.x - 11, o.y - 4.5, 22, 9, 3); ctx.fill(); }
+      }
+      const pos = pairs.map(p => { const bx = p.x, by = yAt(p.li, bx), gx = Math.max(x0 - 16, bx - 24), gy = yAt(p.li, gx) - 15; return { bx, by, gx, gy }; });
+      ctx.lineCap = 'round';
+      for (const w of waves) {
+        const q = pos[pairs.indexOf(w.p)], ang = Math.atan2(q.by - q.gy, q.bx - q.gx), k = w.a / 0.7;
+        ctx.strokeStyle = rgba(C, (1 - k) * 0.85); ctx.lineWidth = 1.6;
+        for (const off of [0, 6]) { const r = 8 + k * 16 - off; if (r > 7) { ctx.beginPath(); ctx.arc(q.gx, q.gy, r, ang - 0.55, ang + 0.55); ctx.stroke(); } }
+      }
+      pairs.forEach((p, i) => {
+        const q = pos[i];
+        ring(ctx, q.gx, q.gy, 6, C, 2.2, pal.surface2);
+        const ang = Math.atan2(yAt(p.li, q.bx + 3) - yAt(p.li, q.bx - 3), 6);
+        bumper(ctx, q.bx, q.by, 7.5, ang, rgba(C, 0.75));
+        dot(ctx, q.bx, q.by, 7.5, C);
+        closedEyes(ctx, q.bx, q.by, 7.5);
+        if (p.done) {
+          ctx.font = `800 11px ${CFONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = p.rank === 1 ? C : pal.muted; ctx.fillText('#' + p.rank, x1 + 12, q.by);
+        }
+      });
+    }
+  };
+};
+
+/* 背靠背避難：紅點是鬼；被追的點找人背靠背，一起數 1、2、3 後分開；換姿勢模式會不時喊出新姿勢 */
+SCENES.backtoback = (W, H, g, opts) => {
+  const C = g.color, mode = opts.mode || 2;
+  const fx = 10, fy = 10, fw = W - 20, fh = H - 20, M = 9;
+  const NG = mode === 2 ? 2 : 4, N = 14, COUNT = 0.8;
+  const POSES = ['poseBack', 'poseClap', 'poseElbow', 'poseSquat'];
+  const stats = { tags: 0, pairs: 0, splits: 0 };
+  let ps, poseI, poseT, banner;
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const isSafe = p => !!p.partner && p.joined && p.sw <= 0;
+  function reset() {
+    ps = [];
+    for (let i = 0; i < N; i++) {
+      let x, y, k = 0;
+      do { x = rand(fx + 16, fx + fw - 16); y = rand(fy + 30, fy + fh - 14); }
+      while (++k < 40 && ps.some(p => Math.hypot(p.x - x, p.y - y) < 26));
+      ps.push({ x, y, h: rand(0, TAU), ghost: i < NG, partner: null, seek: false, joined: false, safeT: 0, last: null, cool: 0, freeze: i < NG ? 0.8 : 0, sw: 0, flash: 0 });
+    }
+    poseI = 0; poseT = 0; banner = mode === 'pose' ? 1.2 : 0;
+  }
+  reset();
+  function unlink(p) {
+    const q = p.partner;
+    if (q) { q.partner = null; q.joined = false; q.seek = false; q.safeT = 0; q.sw = 0; }
+    p.partner = null; p.joined = false; p.seek = false; p.safeT = 0; p.sw = 0;
+  }
+  function split(a, b) {
+    const ang = Math.atan2(b.y - a.y, b.x - a.x);
+    unlink(a);
+    a.h = ang + Math.PI; b.h = ang; a.last = b; b.last = a; a.cool = b.cool = 0.9;
+    stats.splits++;
+  }
+  function changePose() {
+    let worst = null, wd = 1e9;
+    for (const p of ps) {
+      const q = p.partner;
+      if (!p.joined || !q || ps.indexOf(p) > ps.indexOf(q)) continue;
+      p.sw = q.sw = rand(0.15, 0.5);
+      for (const gh of ps) if (gh.ghost) { const d = Math.hypot(gh.x - (p.x + q.x) / 2, gh.y - (p.y + q.y) / 2); if (d < wd) { wd = d; worst = p; } }
+    }
+    if (worst) worst.sw = worst.partner.sw = 1.5;
+  }
+  function step(p, v, dt) {
+    const cx = fx + fw / 2, cy = fy + fh / 2;
+    if (p.x < fx + 24 || p.x > fx + fw - 24 || p.y < fy + 24 || p.y > fy + fh - 24) p.h = turnToward(p.h, Math.atan2(cy - p.y, cx - p.x), 3 * dt);
+    p.x = clamp(p.x + Math.cos(p.h) * v * dt, fx + M, fx + fw - M);
+    p.y = clamp(p.y + Math.sin(p.h) * v * dt, fy + M, fy + fh - M);
+  }
+  return {
+    stats,
+    caption: () => t(mode === 'pose' ? 'capBBPose' : mode === 4 ? 'capBB4' : 'capBB2'),
+    update(dt) {
+      for (const p of ps) {
+        p.cool = Math.max(0, p.cool - dt); p.freeze = Math.max(0, p.freeze - dt);
+        p.flash = Math.max(0, p.flash - dt); p.sw = Math.max(0, p.sw - dt);
+      }
+      banner = Math.max(0, banner - dt);
+      if (mode === 'pose') { poseT += dt; if (poseT >= 4.2) { poseT = 0; poseI = (poseI + 1) % POSES.length; banner = 1.2; changePose(); } }
+      const ghosts = ps.filter(p => p.ghost);
+      for (const p of ps) {
+        if (p.ghost) continue;
+        if (p.partner) {
+          const q = p.partner;
+          if (!p.joined) {
+            if (p.seek) {
+              if (dist(p, q) <= 15.5) { p.joined = q.joined = true; p.seek = false; p.safeT = q.safeT = 0; stats.pairs++; }
+              else { p.h = Math.atan2(q.y - p.y, q.x - p.x); step(p, 34, dt); }
+            }
+          } else if (p.sw <= 0) {
+            p.safeT += dt;
+            if (p.safeT >= COUNT * 3 && q.safeT >= COUNT * 3) split(p, q);
+          }
+          continue;
+        }
+        let ng = null, gd = 1e9;
+        for (const gh of ghosts) { const d = dist(p, gh); if (d < gd) { gd = d; ng = gh; } }
+        const chased = !!ng && gd < 62;
+        if (chased && p.cool <= 0) {
+          let best = null, bd = 120;
+          for (const o of ps) {
+            if (o === p || o.ghost || o.partner || o.cool > 0 || o === p.last || o.last === p) continue;
+            const d = dist(p, o);
+            if (d < bd) { bd = d; best = o; }
+          }
+          if (best) { p.partner = best; best.partner = p; p.seek = true; best.seek = false; continue; }
+        }
+        if (chased) p.h = turnToward(p.h, Math.atan2(p.y - ng.y, p.x - ng.x), 4 * dt);
+        else p.h += rand(-2.5, 2.5) * dt;
+        step(p, chased ? 23 : 14, dt);
+      }
+      for (const gh of ghosts) {
+        if (gh.freeze > 0) continue;
+        let best = null, bd = 1e9;
+        for (const p of ps) if (!p.ghost && !isSafe(p)) { const d = dist(gh, p); if (d < bd) { bd = d; best = p; } }
+        if (best) gh.h = turnToward(gh.h, Math.atan2(best.y - gh.y, best.x - gh.x), 3.6 * dt); else gh.h += rand(-2, 2) * dt;
+        step(gh, 24, dt);
+      }
+      for (const gh of ghosts) {
+        if (!gh.ghost || gh.freeze > 0) continue;
+        for (const p of ps) {
+          if (p.ghost || isSafe(p) || dist(gh, p) >= 14.5) continue;
+          unlink(p);
+          p.ghost = true; p.freeze = 1.6; p.flash = 0.6; p.last = null; p.cool = 0;
+          gh.ghost = false; gh.cool = 0.8; gh.last = null; gh.h = Math.atan2(gh.y - p.y, gh.x - p.x);
+          stats.tags++;
+          break;
+        }
+      }
+      for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) {
+        const a = ps[i], b = ps[j];
+        if (a.partner === b) continue;
+        const mixed = a.ghost !== b.ghost;
+        if (mixed && !isSafe(a.ghost ? b : a)) continue;
+        const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01;
+        if (d >= 16) continue;
+        const ka = mixed ? (a.ghost ? 1 : 0) : (a.joined && !b.joined ? 0 : b.joined && !a.joined ? 1 : 0.5);
+        const push = 16 - d;
+        a.x -= dx / d * push * ka; a.y -= dy / d * push * ka;
+        b.x += dx / d * push * (1 - ka); b.y += dy / d * push * (1 - ka);
+      }
+    },
+    draw(ctx) {
+      rrect(ctx, fx, fy, fw, fh, 14); ctx.fillStyle = pal.field; ctx.fill(); ctx.strokeStyle = pal.line; ctx.lineWidth = 1; ctx.stroke();
+      const pose = mode === 'pose' ? POSES[poseI] : 'poseBack';
+      const pairs = [];
+      for (const p of ps) if (p.joined && p.partner && ps.indexOf(p) < ps.indexOf(p.partner)) pairs.push([p, p.partner]);
+      ctx.lineCap = 'round';
+      for (const [p, q] of pairs) {
+        ctx.strokeStyle = rgba(C, p.sw > 0 ? 0.1 : 0.26); ctx.lineWidth = 22;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+      }
+      for (const p of ps) if (!p.ghost) {
+        if (p.cool > 0) ring(ctx, p.x, p.y, 11, rgba(C, 0.6 * p.cool / 0.9), 1.5, null);
+        const squat = pose === 'poseSquat' && p.joined && p.sw <= 0;
+        dot(ctx, p.x, p.y, squat ? 5.5 : 7, C);
+      }
+      for (const [p, q] of pairs) {
+        const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
+        if (p.sw > 0) { tag(ctx, '!', mx, my - 18, pal.ghost, '#fff', 11); continue; }
+        const a = Math.atan2(q.y - p.y, q.x - p.x), ux = Math.cos(a), uy = Math.sin(a), nx = -uy, ny = ux;
+        ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 1.8;
+        if (pose === 'poseBack' || pose === 'poseClap') {
+          for (const s of pose === 'poseBack' ? [0] : [-2.2, 2.2]) {
+            ctx.beginPath(); ctx.moveTo(mx + ux * s + nx * 4.5, my + uy * s + ny * 4.5); ctx.lineTo(mx + ux * s - nx * 4.5, my + uy * s - ny * 4.5); ctx.stroke();
+          }
+        } else if (pose === 'poseElbow') {
+          for (const s of [-2, 2]) { ctx.beginPath(); ctx.arc(mx + ux * s, my + uy * s, 3, 0, TAU); ctx.stroke(); }
+        }
+        tag(ctx, String(Math.min(3, Math.floor(p.safeT / COUNT) + 1)), mx, my - 18, C, '#fff', 11);
+      }
+      for (const p of ps) if (p.ghost) {
+        if (p.flash > 0) { ctx.strokeStyle = rgba(pal.ghost, p.flash / 0.6); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 8 + (1 - p.flash / 0.6) * 14, 0, TAU); ctx.stroke(); }
+        dot(ctx, p.x, p.y, 8, pal.ghost);
+      }
+      if (mode === 'pose') {
+        const sc = 1 + 0.3 * Math.max(0, banner - 0.9) / 0.3;
+        ctx.save(); ctx.translate(W / 2, fy + 15); ctx.scale(sc, sc);
+        tag(ctx, t('bbPose', t(pose)), 0, 0, banner > 0 ? C : pal.text, banner > 0 ? '#fff' : pal.surface, 12);
+        ctx.restore();
+      }
+    }
+  };
+};
+
+/* 閉眼捉人：圈內圓點走動，紅色鬼點喊 Marco，其他點發光回 Polo；感染模式被碰到也變紅 */
+SCENES.marco = (W, H, g, opts) => {
+  const C = g.color, mode = opts.mode || 1;
+  const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 17, N = 13;
+  const wallN = Math.max(14, Math.round(TAU * (R + 8) / 22));
+  let ps, rings, shoutT, turn, poloT, winner, hold, lastShouter;
+  const ghosts = () => ps.filter(p => p.ghost), people = () => ps.filter(p => !p.ghost);
+  function reset() {
+    ps = [];
+    for (let i = 0; i < N; i++) {
+      let x, y, tries = 0;
+      do { const a = rand(0, TAU), r = Math.sqrt(Math.random()) * (R - 18); x = cx + Math.cos(a) * r; y = cy + Math.sin(a) * r; }
+      while (++tries < 40 && ps.some(p => Math.hypot(p.x - x, p.y - y) < 22));
+      ps.push({ x, y, h: rand(0, TAU), ghost: false, glow: 0, cool: 0, tx: x, ty: y, marco: 0, polo: 0, flash: 0 });
+    }
+    for (let i = 0; i < (mode === 3 ? 3 : 1); i++) { ps[i].ghost = true; ps[i].cool = 0.8; }
+    rings = []; shoutT = 0.5; turn = 0; poloT = -1; winner = null; hold = 0; lastShouter = null;
+  }
+  reset();
+  function shout() {
+    const gs = ghosts(); if (!gs.length) return;
+    const sh = gs[turn++ % gs.length];
+    sh.marco = 0.9; rings.push({ x: sh.x, y: sh.y, a: 0 }); lastShouter = sh; poloT = 0.3;
+  }
+  function polo() {
+    const pp = people();
+    pp.forEach(p => { p.glow = 0.8; });
+    if (lastShouter) {
+      const ls = lastShouter;
+      const picked = [];
+      const clear = p => ps.every(q => !q.ghost || Math.hypot(p.x - q.x, p.y - q.y) > 36) && picked.every(q => Math.hypot(p.x - q.x, p.y - q.y) > 46);
+      for (const p of pp.slice().sort((a, b) => Math.hypot(a.x - ls.x, a.y - ls.y) - Math.hypot(b.x - ls.x, b.y - ls.y))) {
+        if (picked.length < 2 && clear(p)) { picked.push(p); p.polo = 0.8; }
+      }
+    }
+    for (const gh of ghosts()) {
+      let best = null, bd = 1e9;
+      for (const p of pp) { const d = Math.hypot(p.x - gh.x, p.y - gh.y); if (d < bd) { bd = d; best = p; } }
+      if (best) { gh.tx = best.x + rand(-10, 10); gh.ty = best.y + rand(-10, 10); }
+    }
+  }
+  return {
+    caption: () => winner ? t('capInfectWin') : t(mode === 3 ? 'capMarco3' : mode === 'infect' ? 'capInfect' : 'capMarco1'),
+    update(dt) {
+      for (const r of rings) r.a += dt;
+      rings = rings.filter(r => r.a < 0.9);
+      for (const p of ps) {
+        p.glow = Math.max(0, p.glow - dt); p.marco = Math.max(0, p.marco - dt); p.polo = Math.max(0, p.polo - dt);
+        p.cool = Math.max(0, p.cool - dt); p.flash = Math.max(0, p.flash - dt);
+      }
+      if (winner) { hold += dt; if (hold > 3) reset(); return; }
+      shoutT -= dt;
+      if (shoutT <= 0) { shout(); shoutT = mode === 3 ? 1.0 : mode === 'infect' ? 1.3 : 1.8; }
+      if (poloT >= 0) { poloT -= dt; if (poloT < 0) polo(); }
+      for (const p of ps) {
+        let sp = 0;
+        if (p.ghost) {
+          if (p.cool <= 0) {
+            const dx = p.tx - p.x, dy = p.ty - p.y;
+            if (Math.hypot(dx, dy) > 5) p.h = turnToward(p.h, Math.atan2(dy, dx), 3.2 * dt); else p.h += rand(-3, 3) * dt;
+            sp = 25;
+          }
+        } else {
+          p.h += rand(-3, 3) * dt;
+          let ng = null, nd = 1e9;
+          for (const q of ps) if (q.ghost) { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < nd) { nd = d; ng = q; } }
+          if (ng && nd < 40) p.h = turnToward(p.h, Math.atan2(p.y - ng.y, p.x - ng.x), 2.4 * dt);
+          sp = 14;
+        }
+        if (Math.hypot(p.x - cx, p.y - cy) > R - 16) p.h = turnToward(p.h, Math.atan2(cy - p.y, cx - p.x), 5 * dt);
+        p.x += Math.cos(p.h) * sp * dt; p.y += Math.sin(p.h) * sp * dt;
+        const d2 = Math.hypot(p.x - cx, p.y - cy);
+        if (d2 > R - 9) { p.x = cx + (p.x - cx) * (R - 9) / d2; p.y = cy + (p.y - cy) * (R - 9) / d2; }
+      }
+      for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) {
+        const a = ps[i], b = ps[j];
+        if (a.ghost !== b.ghost) continue;
+        const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01;
+        if (d < 16) { const push = (16 - d) / 2; a.x -= dx / d * push; a.y -= dy / d * push; b.x += dx / d * push; b.y += dy / d * push; }
+      }
+      for (const gh of ps) {
+        if (!gh.ghost || gh.cool > 0) continue;
+        for (const p of ps) {
+          if (p.ghost || Math.hypot(p.x - gh.x, p.y - gh.y) >= 15.5) continue;
+          p.ghost = true; p.flash = 0.6; p.cool = 1.2; p.tx = p.x; p.ty = p.y; p.glow = 0; p.polo = 0;
+          if (mode === 'infect') {
+            gh.cool = 0.4;
+            const left = people();
+            if (left.length === 1) { winner = left[0]; hold = 0; }
+          } else {
+            gh.ghost = false; gh.cool = 0; gh.marco = 0; gh.h = Math.atan2(gh.y - p.y, gh.x - p.x);
+          }
+          break;
+        }
+      }
+    },
+    draw(ctx) {
+      ctx.setLineDash([3, 5]); ctx.strokeStyle = pal.line2; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+      for (let i = 0; i < wallN; i++) { const a = i * TAU / wallN; ring(ctx, cx + Math.cos(a) * (R + 8), cy + Math.sin(a) * (R + 8), 3.2, pal.faint, 1.3, null); }
+      for (const r of rings) { const k = r.a / 0.9; ctx.strokeStyle = rgba(pal.ghost, (1 - k) * 0.7); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(r.x, r.y, 10 + k * 70, 0, TAU); ctx.stroke(); }
+      for (const p of ps) if (!p.ghost) {
+        if (p.glow > 0) dot(ctx, p.x, p.y, 7 + 9 * (p.glow / 0.8), rgba(C, 0.3 * (p.glow / 0.8)));
+        dot(ctx, p.x, p.y, 7, C);
+      }
+      for (const p of ps) if (!p.ghost && p.polo > 0) {
+        ctx.font = `800 11px ${CFONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = C; ctx.globalAlpha = Math.min(1, p.polo / 0.25); ctx.fillText('Polo!', p.x, p.y - 15); ctx.globalAlpha = 1;
+      }
+      if (winner) {
+        const k = (hold * 1.6) % 1;
+        ctx.strokeStyle = rgba(C, 1 - k); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(winner.x, winner.y, 10 + k * 18, 0, TAU); ctx.stroke();
+        tag(ctx, t('aWinner'), winner.x, winner.y - 20, C, '#fff', 12);
+      }
+      for (const p of ps) if (p.ghost) {
+        if (p.flash > 0) { ctx.strokeStyle = rgba(pal.ghost, p.flash / 0.6); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 8 + (1 - p.flash / 0.6) * 14, 0, TAU); ctx.stroke(); }
+        bumper(ctx, p.x, p.y, 8, p.h, rgba(pal.ghost, 0.8));
+        dot(ctx, p.x, p.y, 8, pal.ghost);
+        closedEyes(ctx, p.x, p.y, 8);
+      }
+      for (const p of ps) if (p.ghost && p.marco > 0) tag(ctx, 'Marco!', p.x, p.y - 20, pal.ghost, '#fff', 11);
+    }
+  };
+};
+
+/* 沙丁魚捉迷藏：一點躲到角落，其他點四處找，找到的一個個擠進角落 */
+SCENES.sardine = (W, H, g) => {
+  const C = g.color;
+  const fx = 8, fy = 8, fw = W - 16, fh = H - 16;
+  const corner = { x: W - 40, y: 38 }, base = { x: W * 0.3, y: H * 0.6 };
+  const bushes = [[0.16, 0.24, 15], [0.5, 0.18, 12], [0.6, 0.74, 16], [0.14, 0.84, 11], [0.86, 0.66, 13]].map(([a, b, r]) => ({ x: W * a, y: H * b, r }));
+  const slots = [];
+  for (let gy = -4; gy <= 6; gy++) for (let gx = -7; gx <= 3; gx++) {
+    const x = corner.x + gx * 13 + (gy & 1 ? 6.5 : 0), y = corner.y + gy * 11.5;
+    if (x > fx + 9 && x < fx + fw - 9 && y > fy + 9 && y < fy + fh - 9) slots.push({ x, y, d: Math.hypot(x - corner.x, y - corner.y) });
+  }
+  slots.sort((a, b) => a.d - b.d);
+  const NS = 9;
+  let phase, pt, hider, seekers, found, nextFind;
+  const pick = s => {
+    let x, y, k = 0;
+    do { x = rand(fx + 16, fx + fw - 16); y = rand(fy + 16, fy + fh - 16); } while (++k < 20 && Math.hypot(x - corner.x, y - corner.y) < 64);
+    s.tx = x; s.ty = y;
+  };
+  const moveTo = (s, x, y, v, dt) => {
+    const dx = x - s.x, dy = y - s.y, d = Math.hypot(dx, dy);
+    if (d <= v * dt || d < 0.5) { s.x = x; s.y = y; return true; }
+    s.x += dx / d * v * dt; s.y += dy / d * v * dt; return false;
+  };
+  function reset() {
+    phase = 'hide'; pt = 0; found = 0; nextFind = 1.4;
+    hider = { x: base.x, y: base.y };
+    seekers = Array.from({ length: NS }, (_, i) => {
+      const a = i * TAU / NS;
+      return { x: base.x + Math.cos(a) * 26, y: base.y + Math.sin(a) * 26, st: 'count', sp: rand(28, 36), slot: -1, pop: 0, last: false, tx: 0, ty: 0 };
+    });
+  }
+  reset();
+  return {
+    caption: () => t(phase === 'hide' ? 'capHide' : phase === 'seek' ? 'capSeek' : 'capBoo'),
+    update(dt) {
+      pt += dt;
+      for (const s of seekers) s.pop = Math.max(0, s.pop - dt);
+      if (phase === 'hide') {
+        const k = Math.min(1, pt / 2.2), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        hider.x = base.x + (corner.x - base.x) * e; hider.y = base.y + (corner.y - base.y) * e;
+        if (pt > 3) { phase = 'seek'; pt = 0; seekers.forEach(s => { s.st = 'search'; pick(s); }); }
+      } else if (phase === 'seek') {
+        nextFind -= dt;
+        const searching = seekers.filter(s => s.st === 'search');
+        if (searching.length > 1 && nextFind <= 0) {
+          const s = searching[Math.floor(Math.random() * searching.length)];
+          s.st = 'go'; s.slot = ++found; nextFind = rand(0.9, 1.5);
+        } else if (searching.length === 1 && nextFind <= -1.4) {
+          const s = searching[0]; s.st = 'go'; s.slot = ++found; s.last = true; nextFind = 99;
+        }
+        for (const s of seekers) {
+          if (s.st === 'search') { if (moveTo(s, s.tx, s.ty, s.sp, dt)) pick(s); }
+          else if (s.st === 'go') {
+            const sl = slots[Math.min(s.slot, slots.length - 1)];
+            if (moveTo(s, sl.x, sl.y, 46, dt)) { s.st = 'hid'; s.pop = 0.35; if (s.last) { phase = 'boo'; pt = 0; } }
+          }
+        }
+      } else if (pt > 3.2) reset();
+    },
+    draw(ctx) {
+      rrect(ctx, fx, fy, fw, fh, 14); ctx.fillStyle = pal.field; ctx.fill(); ctx.strokeStyle = pal.line; ctx.lineWidth = 1; ctx.stroke();
+      blob(ctx, corner.x - 8, corner.y + 6, 30, pal.bush2);
+      for (const b of bushes) blob(ctx, b.x, b.y, b.r, pal.bush);
+      if (phase === 'hide') {
+        ctx.font = `800 13px ${CFONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = pal.muted;
+        ctx.fillText(String(Math.min(120, Math.floor(pt / 3 * 120) + 1)) + ' …', base.x, base.y - 44);
+      }
+      for (const s of seekers) {
+        if (s.st === 'count') ring(ctx, s.x, s.y, 6, pal.muted, 1.8, pal.surface2);
+        else if (s.st === 'hid') dot(ctx, s.x, s.y, 6 + s.pop * 6, C);
+        else ring(ctx, s.x, s.y, 6, C, 2, pal.surface2);
+      }
+      dot(ctx, hider.x, hider.y, 6.5, C);
+      ring(ctx, hider.x, hider.y, 9.5, rgba(C, 0.55), 1.5, null);
+      if (phase === 'boo') {
+        for (const off of [0, 0.25]) {
+          const kk = clamp((pt - off) / 0.9, 0, 1);
+          if (kk > 0 && kk < 1) { ctx.strokeStyle = rgba(C, 1 - kk); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(corner.x - 10, corner.y + 10, 20 + kk * 90, 0, TAU); ctx.stroke(); }
+        }
+        const sc = 0.6 + 0.4 * Math.min(1, pt / 0.25);
+        ctx.save(); ctx.translate(W * 0.42, H * 0.46); ctx.scale(sc, sc);
+        ctx.font = `800 30px ${CFONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = C; ctx.fillText(t('aBoo'), 0, 0);
+        ctx.restore();
+        const last = seekers.find(s => s.last);
+        if (last) {
+          ctx.font = `700 11px ${CFONT}`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillStyle = pal.text;
+          ctx.fillText(t('aNext') + ' →', last.x - 12, last.y);
+        }
+      }
+    }
+  };
+};
+
+/* 通用動畫：新加的遊戲若沒有專屬動畫就用這個 */
+SCENES.dots = (W, H, g) => {
+  const C = g.color;
+  const ps = Array.from({ length: 10 }, () => ({ x: rand(20, W - 20), y: rand(20, H - 20), h: rand(0, TAU) }));
+  return {
+    caption: () => t('capDots'),
+    update(dt) {
+      for (const p of ps) {
+        p.h += rand(-2, 2) * dt; p.x += Math.cos(p.h) * 20 * dt; p.y += Math.sin(p.h) * 20 * dt;
+        if (p.x < 14 || p.x > W - 14) { p.h = Math.PI - p.h; p.x = clamp(p.x, 14, W - 14); }
+        if (p.y < 14 || p.y > H - 14) { p.h = -p.h; p.y = clamp(p.y, 14, H - 14); }
+      }
+    },
+    draw(ctx) { for (const p of ps) dot(ctx, p.x, p.y, 7, C); }
+  };
+};
+
+const Anim = {
+  raf: 0, scene: null, canvas: null, g: null, w: 0, h: 0, dpr: 1, cap: null, capText: '', last: 0,
+  start(canvas, g) {
+    this.stop();
+    if (!canvas) return;
+    this.canvas = canvas; this.g = g; this.cap = $('[data-anim-cap]');
+    this.build();
+    this.last = performance.now();
+    const loop = now => {
+      if (!this.canvas || !this.canvas.isConnected) { this.stop(); return; }
+      const dt = Math.min(0.05, Math.max(0, (now - this.last) / 1000));
+      this.last = now;
+      this.scene.update(dt);
+      this.paint();
+      this.raf = requestAnimationFrame(loop);
+    };
+    this.raf = requestAnimationFrame(loop);
+  },
+  build() {
+    const wrap = this.canvas.parentElement;
+    const w = Math.max(240, Math.floor(wrap.clientWidth));
+    const h = Math.round(clamp(w * 0.68, 210, 300));
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    this.canvas.width = Math.round(w * dpr); this.canvas.height = Math.round(h * dpr);
+    this.canvas.style.width = w + 'px'; this.canvas.style.height = h + 'px';
+    this.w = w; this.h = h; this.dpr = dpr;
+    readPalette();
+    this.scene = (SCENES[this.g.anim] || SCENES.dots)(w, h, this.g, { mode: curMode(this.g.anim) });
+    this.paint();
+  },
+  paint() {
+    const ctx = this.canvas.getContext('2d');
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.clearRect(0, 0, this.w, this.h);
+    this.scene.draw(ctx);
+    const c = this.scene.caption ? this.scene.caption() : '';
+    if (this.cap && c !== this.capText) { this.capText = c; this.cap.textContent = c; }
+  },
+  restart() { if (this.canvas && this.g && this.canvas.isConnected) this.build(); },
+  stop() { cancelAnimationFrame(this.raf); this.raf = 0; this.canvas = null; this.scene = null; this.capText = ''; }
+};
+
+/* =====================================================================
+   事件
+   ===================================================================== */
+function setLang(l) {
+  if ((l !== 'zh' && l !== 'en') || l === S.lang) return;
+  S.lang = l; store.set('lang', l);
+  const y = window.scrollY;
+  render();
+  window.scrollTo(0, y);
+}
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  switch (el.dataset.act) {
+    case 'lang': setLang(el.dataset.lang); break;
+    case 'mode': {
+      const anim = Anim.g && Anim.g.anim, opt = (MODES[anim] || []).find(([v]) => String(v) === el.dataset.m);
+      if (!opt) break;
+      const m = opt[0];
+      S.modes[anim] = m;
+      $$('[data-act="mode"]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === String(m))));
+      Anim.restart();
+    } break;
+    case 'replay': Anim.restart(); break;
+  }
+});
+document.addEventListener('toggle', e => {
+  const d = e.target;
+  if (d && d.matches && d.matches('details[data-k]')) { S.open[d.dataset.k] = d.open; store.set('open', S.open); }
+}, true);
+document.addEventListener('touchstart', () => {}, { passive: true });
+
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readPalette); } catch (e) { /* 舊瀏覽器略過 */ }
+let resizeTimer = 0, lastW = window.innerWidth;
+window.addEventListener('resize', () => {
+  if (window.innerWidth === lastW) return;
+  lastW = window.innerWidth;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => Anim.restart(), 200);
+});
+window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); });
+
+render();
+</script>
+</body>
+</html>
